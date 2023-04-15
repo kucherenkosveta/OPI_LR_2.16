@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import json
 import sys
-import os
+import json
 import jsonschema
-from jsonschema import validate
-
 
 def get_way():
     """
@@ -20,7 +17,7 @@ def get_way():
     return {
         'start': start,
         'finish': finish,
-        'num': num,
+        'num': num
     }
 
 
@@ -72,51 +69,51 @@ def find_way(numbers, nw):
     for h in numbers:
         if nw in str(h.values()):
             result.append(h)
+
+    # Проверка на наличие записей
+    if len(result) == 0:
+        return None
+
     # Возвратить список выбранных маршрутов.
     return result
 
 
-def save_ways(file_name, routes):
-    """
-    Сохранить номера всех маршрутов в файл JSON.
-    """
-    # Открыть файл с заданным именем для записи.
+def save_ways(file_name, numbers):
     with open(file_name, "w", encoding="utf-8") as fout:
-        # Выполнить сериализацию данных в формат JSON.
-        # Для поддержки кирилицы установим ensure_ascii=False
-        json.dump(routes, fout, ensure_ascii=False, indent=4)
+        json.dump(numbers, fout, ensure_ascii=False, indent=4)
 
 
-def load_ways(file_name, load):
-    os.chdir("/Users/svetik/Desktop/OPI/OPI_LR_2.16")
-    """
-    Загрузить все маршруты из файла JSON.
-    """
-    # Открыть файл с заданным именем для чтения.
+def load_ways(file_name):
+    schema = {
+        "type": "array",
+        "items": [
+            {
+                "type": "object",
+                "ways": {
+                    "start": {"type": "string"},
+                    "finish": {"type": "string"},
+                    "num":  {"type": "integer"},
+                    },
+                "required" : ["start", "finish", "num"],
+            }
+        ],
+    }
     with open(file_name, "r", encoding="utf-8") as fin:
-        return json.load(fin)
-    print("Файл загружен")
-    validate(file, load)
-    return file
-
-
-def validate(file, schema):
-    validator = jsonschema.Draft7Validator(schema)
-    try:
-        if not validator.validate(file):
-            print("Нет ошибок валидации")
-    except jsonschema.exceptions.ValidationError:
-        print("Ошибка валидации", file=sys.stderr)
-        exit(1)
+        loadfile = json.load(fin)
+        validator = jsonschema.Draft7Validator(schema)
+        try:
+            if not validator.validate(loadfile):
+                print("Валидация прошла успешно")
+        except jsonschema.exceptions.ValidationError:
+            print("Ошибка валидации", file=sys.stderr)
+            exit()
+    return loadfile
 
 
 def main():
     """
     Главная функция программы.
     """
-    os.chdir("/Users/svetik/Desktop/OPI/OPI_LR_2.16")
-    with open('check.json', 'r') as check:
-        first_load = json.load(check)
     # Маршруты
     ways = []
 
@@ -144,27 +141,25 @@ def main():
             display_way(ways)
 
         elif command == 'find':
-            f = command.split('Введите номер маршрута: ', maxsplit=1)
-            period = int(f[1])
-
-            selected = find_way(ways, period)
+            f = input('Введите номер маршрута: ')
+            selected = find_way(ways, f)
             display_way(selected)
 
         elif command.startswith("save "):
             # Разбить команду на части для выделения имени файла.
-            f = command.split(maxsplit=1)
+            parts = command.split(maxsplit=1)
             # Получить имя файла.
-            file_name = f[1]
+            file_name = parts[1]
             # Сохранить данные в файл с заданным именем.
             save_ways(file_name, ways)
 
         elif command.startswith("load "):
             # Разбить команду на части для выделения имени файла.
-            f = command.split(maxsplit=1)
+            parts = command.split(maxsplit=1)
             # Получить имя файла.
-            file_name = f[1]
+            file_name = parts[1]
             # Сохранить данные в файл с заданным именем.
-            ways = load_ways(file_name, first_load)
+            ways = load_ways(file_name)
 
         elif command == 'help':
             # Вывести справку.
@@ -172,11 +167,10 @@ def main():
             print("add - добавить маршрут;")
             print("list - вывести список маршрутов;")
             print("find - вывод информации о маршруте;")
-            print("save - сохранить данные в файл;")
             print("load - загрузить данные из файла;")
+            print("save - сохранить данные в файл;")
             print("help - отобразить справку;")
             print("exit - завершить работу с программой.")
-
         else:
             print(f"Неизвестная команда {command}", file=sys.stderr)
 

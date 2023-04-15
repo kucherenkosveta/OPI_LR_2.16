@@ -1,150 +1,142 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import json
+
 import sys
-from datetime import date
+import json
 from pydantic import BaseModel, ValidationError, validator
 
 
-class PersonSchema(BaseModel):
-    name: str
-    post: str
-    year: int
+class WaysSchema(BaseModel):
+    start: str
+    finish: str
+    num: int
 
 
-def get_worker():
+def get_way():
     """
-    Запросить данные о работнике.
+    Запросить данные о маршруте.
     """
-    name = input("Фамилия и инициалы? ")
-    post = input("Должность? ")
-    year = int(input("Год поступления? "))
-    # Создать словарь.
+    start = input('Название начального маршрута: ')
+    finish = input('Название конечного маршрута: ')
+    num = int(input('Номер маршрута: '))
+
+    # Вернуть словарь.
     return {
-        "name": name,
-        "post": post,
-        "year": year,
+        'start': start,
+        'finish': finish,
+        'num': num
     }
 
 
-def display_workers(staff):
+def display_way(numbers):
     """
-    Отобразить список работников.
+    Отобразить список маршрутов.
     """
-    # Проверить, что список работников не пуст.
-    if staff:
+    if numbers:
         # Заголовок таблицы.
-        line = "+-{}-+-{}-+-{}-+-{}-+".format("-" * 4, "-" * 30,
-                                              "-" * 20, "-" * 8
-                                              )
+        line = '+-{}-+-{}-+-{}-+-{}-+'.format(
+            '-' * 4,
+            '-' * 30,
+            '-' * 30,
+            '-' * 15
+        )
         print(line)
         print(
-            "| {:^4} | {:^30} | {:^20} | {:^8} |".format(
-                "№", "Ф.И.О.", "Должность", "Год"
+            '| {:^4} | {:^30} | {:^30} | {:^15} |'.format(
+                "No",
+                "Название начального маршрута",
+                "Название конечного маршрута",
+                "Номер маршрута"
             )
         )
         print(line)
-        # Вывести данные о всех сотрудниках.
-        for idx, worker in enumerate(staff, 1):
+
+        # Вывести данные о всех маршрутах.
+        for idx, way in enumerate(numbers, 1):
             print(
-                "| {:>4} | {:<30} | {:<20} | {:>8} |".format(
+                '| {:>4} | {:<30} | {:<30} | {:>15} |'.format(
                     idx,
-                    worker.get("name", ""),
-                    worker.get("post", ""),
-                    worker.get("year", 0),
+                    way.get('start', ''),
+                    way.get('finish', ''),
+                    way.get('num', 0)
                 )
             )
         print(line)
 
     else:
-        print("Список работников пуст.")
+        print("Список пуст.")
 
 
-def select_workers(staff, period):
+def find_way(numbers, nw):
     """
-    Выбрать работников с заданным стажем.
+    Выбрать маршрут с данным номером.
     """
-
-    # Получить текущую дату.
-    today = date.today()
-    # Сформировать список работников.
+    # Список маршрутов
     result = []
-    for employee in staff:
-        if today.year - employee.get("year", today.year) >= period:
-            result.append(employee)
-    # Возвратить список выбранных работников.
+    for h in numbers:
+        if nw in str(h.values()):
+            result.append(h)
+
+    # Проверка на наличие записей
+    if len(result) == 0:
+        return None
+
+    # Возвратить список выбранных маршрутов.
     return result
 
 
-def save_workers(file_name, staff):
-    """
-    Сохранить всех работников в файл JSON.
-    """
-    # Открыть файл с заданным именем для записи.
+def save_ways(file_name, numbers):
     with open(file_name, "w", encoding="utf-8") as fout:
-        # Выполнить сериализацию данных в формат JSON.
-        # Для поддержки кирилицы установим ensure_ascii=False
-        json.dumps(staff, fout, ensure_ascii=False, indent=4)
+        json.dump(numbers, fout, ensure_ascii=False, indent=4)
 
 
-def load_workers(file_name):
-    """
-    Загрузить всех работников из файла JSON.
-    """
-
-    # Открыть файл с заданным именем для чтения.
+def load_ways(file_name):
     with open(file_name, "r", encoding="utf-8") as fin:
-        data = json.loads(fin.read())
-    try:
-        for i in data:
-            PersonSchema.parse_raw(str(i).replace("'", '"'))
-        print("Given JSON data is Valid")
-        return data
-    except ValidationError as err:
-        print("Given JSON data is Invalid")
-        print(err)
-
+        indata = json.load(fin)
+        try:
+            for i in indata:
+                WaysSchema.parse_raw(str(i).replace("'", '"'))
+            print("Validation was successful")
+            return indata
+        except ValidationError as err:
+            print("Error in validation")
+            print(err)
 
 
 def main():
     """
     Главная функция программы.
     """
+    # Маршруты
+    ways = []
 
-    # Список работников.
-    workers = []
     # Организовать бесконечный цикл запроса команд.
     while True:
         # Запросить команду из терминала.
         command = input(">>> ").lower()
+
         # Выполнить действие в соответствие с командой.
-        if command == "exit":
+        if command == 'exit':
             break
 
-        elif command == "add":
-            # Запросить данные о работнике.
-            worker = get_worker()
-            # Добавить словарь в список.load data
+        elif command == 'add':
+            # Запросить данные о маршруте.
+            way = get_way()
 
-            workers.append(worker)
+            # Добавить словарь в список.
+            ways.append(way)
             # Отсортировать список в случае необходимости.
-            if len(workers) > 1:
-                workers.sort(key=lambda item: item.get("name", ""))
+            if len(ways) > 1:
+                ways.sort(key=lambda item: item.get('num', 0))
 
-        elif command == "list":
-            # Отобразить всех работников.
-            display_workers(workers)
+        elif command == 'list':
+            # Отобразить все маршруты.
+            display_way(ways)
 
-        elif command.startswith("select "):
-            # Разбить команду на части для выделения стажа.
-            parts = command.split(maxsplit=1)
-            # Получить требуемый стаж.
-            period = int(parts[1])
-
-            # Выбрать работников с заданным стажем.
-            selected = select_workers(workers, period)
-            # Отобразить выбранных работников.
-            display_workers(selected)
+        elif command == 'find':
+            f = input('Введите номер маршрута: ')
+            selected = find_way(ways, f)
+            display_way(selected)
 
         elif command.startswith("save "):
             # Разбить команду на части для выделения имени файла.
@@ -152,7 +144,7 @@ def main():
             # Получить имя файла.
             file_name = parts[1]
             # Сохранить данные в файл с заданным именем.
-            save_workers(file_name, workers)
+            save_ways(file_name, ways)
 
         elif command.startswith("load "):
             # Разбить команду на части для выделения имени файла.
@@ -160,23 +152,21 @@ def main():
             # Получить имя файла.
             file_name = parts[1]
             # Сохранить данные в файл с заданным именем.
-            workers = load_workers(file_name)
+            ways = load_ways(file_name)
 
-
-        elif command == "help":
-            # Вывести справку о работе с программой.
+        elif command == 'help':
+            # Вывести справку.
             print("Список команд:\n")
-            print("add - добавить работника;")
-            print("list - вывести список работников;")
-            print("select <стаж> - запросить работников со стажем;")
-            print("help - отобразить справку;")
+            print("add - добавить маршрут;")
+            print("list - вывести список маршрутов;")
+            print("find - вывод информации о маршруте;")
             print("load - загрузить данные из файла;")
             print("save - сохранить данные в файл;")
+            print("help - отобразить справку;")
             print("exit - завершить работу с программой.")
-
         else:
             print(f"Неизвестная команда {command}", file=sys.stderr)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
