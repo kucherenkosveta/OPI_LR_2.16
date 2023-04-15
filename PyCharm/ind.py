@@ -74,7 +74,7 @@ def find_way(numbers, nw):
     return result
 
 
-def save_ways(file_name, routes):
+def save_ways(file_name, ways):
     """
     Сохранить номера всех маршрутов в файл JSON.
     """
@@ -82,7 +82,7 @@ def save_ways(file_name, routes):
     with open(file_name, "w", encoding="utf-8") as fout:
         # Выполнить сериализацию данных в формат JSON.
         # Для поддержки кирилицы установим ensure_ascii=False
-        json.dump(routes, fout, ensure_ascii=False, indent=4)
+        json.dump(ways, fout, ensure_ascii=False, indent=4)
 
 
 def load_ways(file_name):
